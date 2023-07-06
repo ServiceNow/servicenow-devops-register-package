@@ -1,15 +1,14 @@
 const core = require('@actions/core');
 const axios = require('axios');
 
-
 (async function main() {
     let instanceUrl = core.getInput('instance-url', { required: true });
     const toolId = core.getInput('tool-id', { required: true });
-    const username = core.getInput('devops-integration-user-name', { required: true });
-    const password = core.getInput('devops-integration-user-password', { required: true });
+    const username = core.getInput('devops-integration-user-name', { required: false });
+    const password = core.getInput('devops-integration-user-password', { required: false });
     const packagename = core.getInput('package-name', { required: true });
     const jobname = core.getInput('job-name', { required: true });
-
+    const devopsIntegrationToken = core.getInput('devops-integration-token', { required: false });
     let artifacts = core.getInput('artifacts', { required: true });
     
     try {
@@ -47,21 +46,37 @@ const axios = require('axios');
         core.setFailed(`Exception setting the payload to register package ${e}`);
         return;
     }
-
-    let snowResponse;
-    const endpoint = `${instanceUrl}/api/sn_devops/devops/package/registration?orchestrationToolId=${toolId}`;
-
     try {
-        const token = `${username}:${password}`;
-        const encodedToken = Buffer.from(token).toString('base64');
-
-        const defaultHeaders = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Basic ' + `${encodedToken}`
-        };
-        
-        let httpHeaders = { headers: defaultHeaders };
+        let snowResponse;
+        const endpointv1 = `${instanceUrl}/api/sn_devops/v1/devops/package/registration?orchestrationToolId=${toolId}`;
+        const endpointv2 = `${instanceUrl}/api/sn_devops/v2/devops/package/registration?orchestrationToolId=${toolId}`;
+        let endpoint ;
+        let httpHeaders ;
+        if(!devopsIntegrationToken && !username && !password){
+            core.setFailed('Either secret token or integration username, password is needed for integration user authentication');
+            return;
+        } else if(devopsIntegrationToken){
+            const defaultHeadersv2 = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': 'sn_devops.DevOpsToken '+`${toolId}`+':'+`${devopsIntegrationToken}`
+            };
+            httpHeaders = { headers: defaultHeadersv2 };
+            endpoint = endpointv2;
+        }else if(username && password){
+            const token = `${username}:${password}`;
+            const encodedToken = Buffer.from(token).toString('base64');
+            const defaultHeadersv1 = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': 'Basic ' + `${encodedToken}`
+            };
+            httpHeaders = { headers: defaultHeadersv1 };
+            endpoint = endpointv1;
+        }else{
+            core.setFailed('For Basic Auth, Username and Password is mandatory for integration user authentication');
+            return;
+        }
         snowResponse = await axios.post(endpoint, JSON.stringify(payload), httpHeaders);
     } catch (e) {
         if (e.message.includes('ECONNREFUSED') || e.message.includes('ENOTFOUND') || e.message.includes('405')) {

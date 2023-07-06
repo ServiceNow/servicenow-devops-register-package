@@ -1,0 +1,44 @@
+name: workflowToken
+
+on:
+  workflow_dispatch:
+    
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+  
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set Node.js 14.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 14.x
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Compile
+      run: npm run build
+  registerpackage:
+    needs: build
+    runs-on: ubuntu-latest
+    name: ServiceNow Register Package
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: ServiceNow Register Package
+        uses: ServiceNow/servicenow-devops-register-package@v1.39.0
+        id: update
+        with:
+          devops-integration-token: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
+          instance-url: ${{ secrets.SN_INSTANCE_URL }}
+          tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
+          context-github: ${{ toJSON(github) }}
+          job-name: 'Register Package'
+          artifacts: '[{"name": "com:customactiondemo","version": "1.${{ github.run_number }}","semanticVersion": "1.${{ github.run_number }}.0","repositoryName": "${{ github.repository }}"}]'
+          package-name: 'registerpackage.war'
