@@ -5188,6 +5188,19 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(6024);
 const axios = __nccwpck_require__(992);
 
+function circularSafeStringify(obj) {
+    const seen = new WeakSet();
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) {
+          return '[Circular]';
+        }
+        seen.add(value);
+      }
+      return value;
+    });
+}
+
 (async function main() {
     let instanceUrl = core.getInput('instance-url', { required: true });
     const toolId = core.getInput('tool-id', { required: true });
