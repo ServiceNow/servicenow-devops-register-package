@@ -5280,15 +5280,15 @@ function circularSafeStringify(obj) {
         snowResponse = await axios.post(endpoint, JSON.stringify(payload), httpHeaders);
     } catch (e) {
         core.debug('[ServiceNow DevOps] Package Registration, Error: '+JSON.stringify(e));
+        if(e.response && e.response.data) {
+            var responseObject=circularSafeStringify(e.response.data);
+            core.debug('[ServiceNow DevOps] Package Registration, Status code :'+e.response.statusCode+', Response data :'+responseObject);          
+        }
+
         if (e.message.includes('ECONNREFUSED') || e.message.includes('ENOTFOUND') || e.message.includes('405')) {
             core.setFailed('ServiceNow Instance URL is NOT valid. Please correct the URL and try again.');
         } else if (e.message.includes('401')) {
             core.setFailed('Invalid username and password or Invalid token and toolid. Please correct the input parameters and try again.');
-            if(e.response && e.response.data) 
-            {
-                var responseObject=circularSafeStringify(e.response.data);
-                core.debug('[ServiceNow DevOps] Package Registration, Response data :'+responseObject);          
-            }
         } else if(e.message.includes('400') || e.message.includes('404')){
             let errMsg = '[ServiceNow DevOps] Package Registration is not Successful. ';
             let errMsgSuffix = ' Please provide valid inputs.';
