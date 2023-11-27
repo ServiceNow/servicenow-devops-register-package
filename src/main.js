@@ -90,12 +90,14 @@ function circularSafeStringify(obj) {
             core.setFailed('For Basic Auth, Username and Password is mandatory for integration user authentication');
             return;
         }
+        core.debug("[ServiceNow DevOps], Sending Request for Register Package, Request Header :"+JSON.stringify(httpHeaders)+", Payload :"+JSON.stringify(payload)+"\n");
         snowResponse = await axios.post(endpoint, JSON.stringify(payload), httpHeaders);
+        core.debug("[ServiceNow DevOps], Receiving response for Register Package, Response :"+snowResponse+"\n");
     } catch (e) {
-        core.debug('[ServiceNow DevOps] Package Registration, Error: '+JSON.stringify(e));
+        core.debug('[ServiceNow DevOps] Package Registration, Error: '+JSON.stringify(e)+"\n");
         if(e.response && e.response.data) {
             var responseObject=circularSafeStringify(e.response.data);
-            core.debug('[ServiceNow DevOps] Package Registration, Status code :'+e.response.statusCode+', Response data :'+responseObject);          
+            core.debug('[ServiceNow DevOps] Package Registration, Status code :'+e.response.status+', Response data :'+responseObject+"\n");          
         }
 
         if (e.message.includes('ECONNREFUSED') || e.message.includes('ENOTFOUND') || e.message.includes('405')) {
