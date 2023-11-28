@@ -5279,7 +5279,7 @@ function circularSafeStringify(obj) {
         }
         core.debug("[ServiceNow DevOps], Sending Request for Register Package, Request Header :"+JSON.stringify(httpHeaders)+", Payload :"+JSON.stringify(payload)+"\n");
         snowResponse = await axios.post(endpoint, JSON.stringify(payload), httpHeaders);
-        core.debug("[ServiceNow DevOps], Receiving response for Register Package, Response :"+snowResponse+"\n");
+        if(snowResponse.data) core.debug("[ServiceNow DevOps], Receiving response for Register Package, Response :"+circularSafeStringify(snowResponse)+"\n");
     } catch (e) {
         core.debug('[ServiceNow DevOps] Package Registration, Error: '+JSON.stringify(e)+"\n");
         if(e.response && e.response.data) {
