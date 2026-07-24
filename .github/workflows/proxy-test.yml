@@ -1,0 +1,38 @@
+# Example: ServiceNow DevOps Register Package with HTTPS Proxy Support
+#
+# This workflow demonstrates how to route the ServiceNow DevOps Register Package
+# action through a corporate HTTPS proxy. The action reads the HTTPS_PROXY
+# environment variable and tunnels all requests via HTTP CONNECT.
+#
+# Required secrets:
+#   HTTPS_PROXY_URL           - Proxy URL, e.g. http://<host>:<port> or http://user:pass@<host>:<port>
+#   SN_INSTANCE_URL           - ServiceNow instance URL
+#   SN_DEVOPS_INTEGRATION_TOKEN - DevOps integration token
+#   SN_ORCHESTRATION_TOOL_ID  - Orchestration tool sys_id
+
+name: Proxy Test - DevOps Register Package
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  registerPackage:
+    name: ServiceNow Register Package
+    runs-on: ubuntu-latest
+
+    # Set HTTPS_PROXY so the action routes traffic through your proxy
+    env:
+      HTTPS_PROXY: ${{ secrets.HTTPS_PROXY_URL }}
+
+    steps:
+      - name: ServiceNow Register Package
+        uses: ServiceNow/servicenow-devops-register-package@feature/https-proxy-agent
+        with:
+          devops-integration-token: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
+          instance-url: ${{ secrets.SN_INSTANCE_URL }}
+          tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
+          context-github: ${{ toJSON(github) }}
+          job-name: 'ServiceNow Register Package'
+          artifacts: '[{"name":"app-build.jar","version":"1.0.${{ github.run_number }}","semanticVersion":"1.0.${{ github.run_number }}","repositoryName":"${{ github.repository }}"}]'
+          package-name: 'app-package-${{ github.run_number }}'
